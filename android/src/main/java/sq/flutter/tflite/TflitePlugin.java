@@ -690,7 +690,7 @@ public class TflitePlugin implements FlutterPlugin, MethodCallHandler, ActivityA
 
     RunSSDMobileNet(HashMap args, ByteBuffer imgData, int numResultsPerClass, float threshold, Result result) {
       super(args, result);
-      this.num = 10; //tfLite.getOutputTensor(0).shape()[1];
+      this.num = tfLite.getOutputTensor(0).shape()[1];
       this.numResultsPerClass = numResultsPerClass;
       this.threshold = threshold;
       this.outputLocations = new float[1][num][4];
@@ -698,10 +698,28 @@ public class TflitePlugin implements FlutterPlugin, MethodCallHandler, ActivityA
       this.outputScores = new float[1][num];
       this.inputArray = new Object[]{imgData};
 
-      outputMap.put(1, outputLocations);
-      outputMap.put(3, outputClasses);
-      outputMap.put(0, outputScores);
-      outputMap.put(2, numDetections);
+      for(int outputMapLocationIterator = 0; outputMapLocationIterator <= 3; outputMapLocationIterator++){
+        String thisTensorName = tfLiteObjectRecognition.getOutputTensor(outputMapLocationIterator).name();
+        switch (thisTensorName) {
+          case "StatefulPartitionedCall:3": {
+            outputMap.put(outputMapLocationIterator, outputLocations);
+            break;
+          }
+          case "StatefulPartitionedCall:2": {
+            outputMap.put(outputMapLocationIterator, outputClasses);
+            break;
+          }
+          case "StatefulPartitionedCall:1": {
+            outputMap.put(outputMapLocationIterator, outputScores);
+            break;
+          }
+          case "StatefulPartitionedCall:0": {
+            outputMap.put(outputMapLocationIterator, numDetections);
+            break;
+          }
+        }
+
+      }
 
       startTime = SystemClock.uptimeMillis();
     }
